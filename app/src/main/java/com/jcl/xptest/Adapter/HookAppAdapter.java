@@ -46,22 +46,37 @@ public class HookAppAdapter extends RecyclerView.Adapter<HookAppAdapter.ViewHold
     }
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
+
         AppInfo info = appInfo.get(position);
+        String app_pgName = "";
         Bitmap app_icon = info.getApp_icon();
-        String app_name = info.getApp_name();
-        String app_pgName = info.getApp_pgName();
-        holder.app_icon.setImageBitmap(app_icon);
-        holder.app_name.setText(app_name);
+        if(info.getApp_class()!=null){
+            holder.app_icon.setImageBitmap(app_icon);
+            if (info.getHook_app_BeiZhu()!=null){
+                holder.app_name.setText(info.getHook_app_BeiZhu());
+            }else {
+                holder.app_name.setText(info.getApp_class());
+            }
+
+        }else {
+            String app_name = info.getApp_name();
+            app_pgName = info.getApp_pgName();
+            holder.app_icon.setImageBitmap(app_icon);
+            holder.app_name.setText(app_name);
+        }
+        String finalApp_pgName = app_pgName;
         holder.itemView.setOnClickListener(new View.OnClickListener() {
             @SuppressLint("NotifyDataSetChanged")
             @Override
             public void onClick(View v) {
-
                 if (info.getApp_class()!=null){
                     System.out.println("第二步");
+
+
                 }else {
-                    appInfo = new ConfigDao(context).findByPgName(app_pgName);
+                    appInfo = new ConfigDao(context).findByPgName(finalApp_pgName);
                     System.out.println("第一步");
+
                     notifyDataSetChanged();
                 }
 

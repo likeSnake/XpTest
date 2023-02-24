@@ -1,0 +1,126 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    tools:context=".MainActivity"
+    android:orientation="vertical"
+    >
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        android:orientation="vertical"
+        >
+
+        <EditText
+            android:id="@+id/hook_app_pgName"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Hook目标包名"
+            android:gravity="center"
+            android:textSize="16sp"
+            />
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        >
+        <EditText
+            android:id="@+id/hook_app_class"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="@string/hook_class"
+            android:textSize="16sp"
+            android:gravity="center" />
+    </LinearLayout>
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        >
+
+        <EditText
+            android:id="@+id/hook_app_modelName"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="目标方法名"
+            android:gravity="center"
+            android:textSize="16sp"
+            />
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        >
+        <EditText
+            android:id="@+id/hook_app_canshu"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="方法参数类型，例如：int,String,object 无参数则不填写"
+            android:gravity="center"
+            android:textSize="16sp"
+            />
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        >
+
+        <EditText
+            android:id="@+id/hook_app_return"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="想要的的返回值"
+            android:gravity="center"
+            android:textSize="16sp"
+            />
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+
+        >
+
+
+        <EditText
+            android:id="@+id/hook_app_BZname"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:hint="Hook备注名"
+            android:layout_marginStart="50dp"
+            android:gravity="center"
+            />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="right"
+            >
+        <Button
+            android:id="@+id/add_hook_app"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="更改"
+            android:layout_marginEnd="50dp"
+            />
+        </LinearLayout>
+    </LinearLayout>
+
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="5dp"
+        android:background="#BCB7B7"/>
+
+</LinearLayout>

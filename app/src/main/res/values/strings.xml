@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name">XpTest</string>
+    <string name="hook_class">Hook目标完整类名</string>
+</resources>

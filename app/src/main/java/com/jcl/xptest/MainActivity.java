@@ -1,31 +1,37 @@
 package com.jcl.xptest;
 
-import static com.jcl.xptest.Utli.AppInfoUtli.getAppIcon;
-import static com.jcl.xptest.Utli.AppInfoUtli.getAppName;
+
+import static com.jcl.xptest.utli.AppInfoUtli.getAppIcon;
+import static com.jcl.xptest.utli.AppInfoUtli.getAppName;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import android.annotation.SuppressLint;
+import android.content.Context;
+import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
+import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
+import android.provider.Settings;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ImageView;
+import android.widget.TextView;
 import android.widget.Toast;
 
-import com.jcl.xptest.Adapter.HookAppAdapter;
-import com.jcl.xptest.Db.ConfigDao;
-import com.jcl.xptest.Db.ConfigureDbHelper;
-import com.jcl.xptest.Pojo.AppInfo;
-import com.jcl.xptest.Utli.AppInfoUtli;
+import com.jcl.xptest.adapter.HookAppAdapter;
+import com.jcl.xptest.db.ConfigDao;
+import com.jcl.xptest.pojo.AppInfo;
+import com.jcl.xptest.utli.MyUtil;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
@@ -38,27 +44,52 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private EditText hook_app_canshu;
     private EditText hook_app_return;
     private EditText hook_app_BZname;
+    private TextView isUsed;
     private Button add_hook_app;
+    private ImageView back;
 
     private ArrayList<AppInfo> redConfig = new ArrayList<>();
 
-    private ArrayList<AppInfo> appInfoArrayList = new ArrayList<>();
-
+    private AppInfo appInfo ;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        getPermission();
         init();
-        System.out.println(getAppName(this, "com.junge.algorithmAide"));
+        initDate();
+        System.out.println(Integer.parseInt("2064c", 16));
 
         if (redConfig.size()>0){
             start(false,redConfig);
-
         }
 
     }
 
+    public void initDate(){
+       MyUtil myUtil = new MyUtil(MainActivity.this);
+    }
+    public void getPermission(){
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && !Settings.canDrawOverlays(this)) {
+            Intent intent = new Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION,
+                    Uri.parse("package:" + getPackageName()));
+            startActivityForResult(intent, 111);
+        }
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+
+        if (requestCode == 111) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M && Settings.canDrawOverlays(this)) {
+                // 用户已经授权悬浮窗权限，执行相应的操作
+            } else {
+                // 用户未授权悬浮窗权限，执行相应的操作
+            }
+        }
+    }
 
     public void start(Boolean b,List<AppInfo> list){
         LinearLayoutManager manager = new LinearLayoutManager(MainActivity.this, LinearLayoutManager.VERTICAL, false);
@@ -71,6 +102,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
 
     public void init(){
+
+
         hookAppList = findViewById(R.id.HookAppList);
         hook_app_pgName = findViewById(R.id.hook_app_pgName);
         hook_app_canshu = findViewById(R.id.hook_app_canshu);
@@ -79,10 +112,15 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         hook_app_return = findViewById(R.id.hook_app_return);
         hook_app_BZname = findViewById(R.id.hook_app_BZname);
         add_hook_app = findViewById(R.id.add_hook_app);
+        isUsed = findViewById(R.id.isUsed);
+        back = findViewById(R.id.back);
 
+        back.setOnClickListener(this);
         add_hook_app.setOnClickListener(this);
 
         redConfig = getAppInfoArrayList(true);
+
+        isUsed.setText(isHook()?"已激活":"未激活");
     }
 
     @SuppressLint("NonConstantResourceId")
@@ -106,29 +144,37 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                         String app_modeName = hook_app_modelName.getText().toString();
                         String app_return = hook_app_return.getText().toString();
                         Drawable drawable = getAppIcon(this, app_pgName);
-                        Bitmap appIcon = drawableToBitmap(drawable);
-
+                        Bitmap appIcon = null;
+                        if (drawable!=null) {
+                             appIcon = drawableToBitmap(drawable);
+                        }else {
+                            Toast.makeText(this, "目标应用不存在！", Toast.LENGTH_SHORT).show();
+                            return;
+                        }
                         String appName = getAppName(this,app_pgName);
                         System.out.println("目标应用名："+appName);
+                        System.out.println(hook_app_canshu.getText().toString());
                         if (!hook_app_canshu.getText().toString().equals("")){
+                            String app_CanShu = hook_app_canshu.getText().toString();
                             if (!hook_app_BZname.getText().toString().equals("")){
                                 String app_BZname = hook_app_BZname.getText().toString();
-                                appInfoArrayList.add(new AppInfo(app_pgName,appName,appIcon,app_class,app_modeName,app_return,null,app_BZname));
+                                System.out.println("添加的备注："+app_BZname);
+                                appInfo = new AppInfo(app_pgName, appName, appIcon, app_class, app_modeName, app_return, app_CanShu, app_BZname);
                             }else {
-                                appInfoArrayList.add(new AppInfo(app_pgName, appName, appIcon, app_class, app_modeName, app_return, null, null));
+                                appInfo = new AppInfo(app_pgName, appName, appIcon, app_class, app_modeName, app_return, app_CanShu, null);
                             }
                         }else {
                             if (!hook_app_BZname.getText().toString().equals("")){
                                 String app_BZname = hook_app_BZname.getText().toString();
-                                appInfoArrayList.add(new AppInfo(app_pgName,appName,appIcon,app_class,app_modeName,app_return,null,app_BZname));
+                                appInfo = new AppInfo(app_pgName,appName,appIcon,app_class,app_modeName,app_return,null,app_BZname);
                             }else {
-                                String app_canshu = hook_app_canshu.getText().toString();
-                                appInfoArrayList.add(new AppInfo(app_pgName, appName, appIcon, app_class, app_modeName, app_return, app_canshu, null));
+                                appInfo = (new AppInfo(app_pgName, appName, appIcon, app_class, app_modeName, app_return, null, null));
                             }
                         }
-                        new ConfigDao(this).add(appInfoArrayList.get(0));
-                        Toast.makeText(this, "已保存自定义Hook", Toast.LENGTH_SHORT).show();
-
+                        int add = new ConfigDao(this).add(appInfo);
+                        if (add == 0) {
+                            Toast.makeText(this, "已保存自定义Hook", Toast.LENGTH_SHORT).show();
+                        }
                         redConfig = getAppInfoArrayList(true);
                         start(false,redConfig);
 
@@ -147,6 +193,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
 
     public ArrayList<AppInfo> getAppInfoArrayList(Boolean distinct){
+
         return new ConfigDao(this).findAppName(distinct);
     }
     public static Bitmap drawableToBitmap(Drawable drawable) {
@@ -171,6 +218,14 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         drawable.draw(canvas);
         return bitmap;
 
+    }
+
+    public boolean isHook(){
+        return false;
+    }
+    public Context getMyContext(){
+        Context context = this;
+        return context;
     }
 
 }

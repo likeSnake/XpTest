@@ -7,19 +7,40 @@
     tools:context=".MainActivity"
     android:orientation="vertical"
     >
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <ImageView
+            android:id="@+id/back"
+            android:layout_width="50dp"
+            android:layout_height="30dp"
+            android:layout_centerVertical="true"
+            android:src="@drawable/back"/>
+
 
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="自定义Hook"
         android:gravity="center"
-        android:textSize="23sp"
+        android:textSize="26sp"
         android:textStyle="bold"/>
 
+        <TextView
+            android:id="@+id/isUsed"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="未激活"
+            android:layout_marginEnd="10dp"
+            android:layout_centerVertical="true"
+            android:layout_alignParentRight="true" />
+
+    </RelativeLayout>
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="10dp"
+        android:layout_marginTop="50dp"
         android:orientation="vertical"
         >
 

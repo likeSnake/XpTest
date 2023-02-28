@@ -1,4 +1,4 @@
-package com.jcl.xptest.Db;
+package com.jcl.xptest.db;
 
 import android.content.Context;
 import android.database.DatabaseErrorHandler;

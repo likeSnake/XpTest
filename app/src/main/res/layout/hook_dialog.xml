@@ -14,7 +14,7 @@
         android:orientation="vertical"
         >
 
-        <EditText
+        <TextView
             android:id="@+id/hook_app_pgName"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -108,7 +108,7 @@
             android:gravity="right"
             >
         <Button
-            android:id="@+id/add_hook_app"
+            android:id="@+id/update_hook_app"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="更改"

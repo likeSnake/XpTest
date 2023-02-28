@@ -1,7 +1,6 @@
-package com.jcl.xptest.Pojo;
+package com.jcl.xptest.pojo;
 
 import android.graphics.Bitmap;
-import android.graphics.drawable.Drawable;
 
 public class AppInfo {
 
@@ -14,6 +13,19 @@ public class AppInfo {
     private String hook_app_canshu;
     private String hook_app_BeiZhu;
 
+    private int id;
+
+    public AppInfo(String app_pgName, String app_name, Bitmap app_icon, String app_class, String app_modeName, String app_return, String hook_app_canshu,String hook_app_BeiZhu,int id) {
+        this.app_name = app_name;
+        this.app_pgName = app_pgName;
+        this.app_icon = app_icon;
+        this.app_class = app_class;
+        this.app_modeName = app_modeName;
+        this.app_return = app_return;
+        this.hook_app_canshu = hook_app_canshu;
+        this.hook_app_BeiZhu = hook_app_BeiZhu;
+        this.id = id;
+    }
     public AppInfo(String app_pgName, String app_name, Bitmap app_icon, String app_class, String app_modeName, String app_return, String hook_app_canshu,String hook_app_BeiZhu) {
         this.app_name = app_name;
         this.app_pgName = app_pgName;
@@ -24,7 +36,9 @@ public class AppInfo {
         this.hook_app_canshu = hook_app_canshu;
         this.hook_app_BeiZhu = hook_app_BeiZhu;
     }
+    public int getId(){return id;}
 
+    public void setId(int id){this.id = id;}
     public String getHook_app_BeiZhu(){
         return hook_app_BeiZhu;
     }

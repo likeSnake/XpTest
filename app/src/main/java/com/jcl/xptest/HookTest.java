@@ -274,6 +274,91 @@ public class HookTest implements IXposedHookLoadPackage, IXposedHookZygoteInit {
         }
     }
 
+    public void createApp(XC_LoadPackage.LoadPackageParam loadPackageParam,String Data){
+
+        try {
+
+
+            // 创建并注册自定义 ResponseListener 类
+            Class<?> responseListenerClass = XposedHelpers.findClass("com.taobao.tao.remotebusiness.IRemoteBaseListener", loadPackageParam.classLoader);
+            Class<?> iRemoteCacheListenerClass = XposedHelpers.findClass("com.taobao.tao.remotebusiness.IRemoteCacheListener", loadPackageParam.classLoader);
+
+            XposedHelpers.findAndHookMethod(responseListenerClass, "onCached", new XC_MethodHook() {
+                @Override
+                protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
+                    // 添加 onCached 方法的代码逻辑
+                    MyLog("XposedModule" + "---------onCached");
+                }
+            });
+
+
+            XposedHelpers.findAndHookMethod(responseListenerClass, "onSuccess", new XC_MethodHook() {
+                @Override
+                protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
+                    // 添加 onSuccess 方法的代码逻辑
+                    MyLog("XposedModule" + "----------onSuccess");
+
+                    // 获取订单参数
+                    JSONObject dataJsonObject = new JSONObject((String) param.args[1]);
+                    MyLog("dataJsonObject-->" + dataJsonObject.toString());
+
+                    JSONObject buildData = new JSONObject(dataJsonObject.toString());
+
+              /*  JSONObject createData = new JSONObject();
+                createData.put("data", new JSONObject());
+                createData.put("endpoint", buildData.get("endpoint"));
+                createData.put("hierarchy", buildData.get("hierarchy"));
+
+                JSONObject linkage = new JSONObject();
+                JSONObject common = new JSONObject();
+                common.put("compress", true);
+                common.put("submitParams", buildData.getJSONObject("linkage").getJSONObject("common").get("submitParams"));
+                common.put("validateParams", buildData.getJSONObject("linkage").getJSONObject("common").get("validateParams"));
+
+                linkage.put("common", common);
+                linkage.put("signature", buildData.getJSONObject("linkage").get("signature"));
+
+                createData.put("linkage", linkage);*/
+                }
+            });
+
+
+            Object mtopRequest = crateMtopRequest(loadPackageParam, Data);
+
+            // 引入 Java 中的类
+            Class<?> MethodEnum = XposedHelpers.findClass("mtopsdk.mtop.domain.MethodEnum", loadPackageParam.classLoader);
+            Class<?> MtopListenerProxyFactory = XposedHelpers.findClass("com.taobao.tao.remotebusiness.listener.MtopListenerProxyFactory", loadPackageParam.classLoader);
+            Class<?> ApiID = XposedHelpers.findClass("mtopsdk.mtop.common.ApiID", loadPackageParam.classLoader);
+            Class<?> MtopStatistics = XposedHelpers.findClass("mtopsdk.mtop.util.MtopStatistics", loadPackageParam.classLoader);
+            Class<?> InnerProtocolParamBuilderImpl = XposedHelpers.findClass("mtopsdk.mtop.protocol.builder.impl.InnerProtocolParamBuilderImpl", loadPackageParam.classLoader);
+
+
+            // 首先获取MtopRequest类
+            Class<?> MtopBusiness = XposedHelpers.findClass("com.taobao.tao.remotebusiness.MtopBusiness", loadPackageParam.classLoader);
+            Object build1 = XposedHelpers.callStaticMethod(MtopBusiness, "build", mtopRequest);
+
+
+            XposedHelpers.callMethod(build1, "useWua");
+            XposedHelpers.callMethod(build1, "reqMethod", MethodEnum.getField("POST").get(null));
+            XposedHelpers.callMethod(build1, "setCustomDomain", "mtop.damai.cn");
+            XposedHelpers.callMethod(build1, "setBizId", 24);
+            XposedHelpers.callMethod(build1, "setErrorNotifyAfterCache", true);
+
+
+            Class<?> mMtopListener = XposedHelpers.findClass("mtopsdk.mtop.intf.MtopBuilder", loadPackageParam.classLoader);
+
+
+            XposedHelpers.setObjectField(mMtopListener, "request", build1);
+            Object mtopStatistics = XposedHelpers.newInstance(mMtopListener, (Object) null, null);
+            XposedHelpers.callMethod(mMtopListener, "addListener", true);
+
+        }catch (Exception e){
+            MyLog("crateBuildParams："+e);
+
+        }
+
+    }
+
     public Object crateBuildParams(XC_LoadPackage.LoadPackageParam loadPackageParam,String Data){
         try{
 
@@ -298,6 +383,13 @@ public class HookTest implements IXposedHookLoadPackage, IXposedHookZygoteInit {
             XposedHelpers.callMethod(build1, "setCustomDomain", "mtop.damai.cn");
             XposedHelpers.callMethod(build1, "setBizId", 24);
             XposedHelpers.callMethod(build1, "setErrorNotifyAfterCache", true);
+            XposedHelpers.callMethod(build1, "setErrorNotifyAfterCache", true);
+
+            Class<?> mMtopListener = XposedHelpers.findClass("mtopsdk.mtop.intf.MtopBuilder", loadPackageParam.classLoader);
+
+
+            XposedHelpers.setObjectField(mMtopListener, "request", build1);
+
             XposedHelpers.setLongField(build1, "reqStartTime", System.currentTimeMillis());
             XposedHelpers.setBooleanField(build1, "isCancelled", false);
             XposedHelpers.setBooleanField(build1, "isCached", false);
@@ -310,7 +402,7 @@ public class HookTest implements IXposedHookLoadPackage, IXposedHookZygoteInit {
 
             Object listener = XposedHelpers.getObjectField(build1,"listener");
 
-            Class<?> mMtopListener = XposedHelpers.findClass("mtopsdk.mtop.intf.MtopBuilder", loadPackageParam.classLoader);
+
             Method createListenerProxy = XposedHelpers.findMethodExact(mMtopListener, "createListenerProxy", "mtopsdk.mtop.common.MtopListener");
             // 绕过访问限制
             createListenerProxy.setAccessible(true);
@@ -427,13 +519,14 @@ public class HookTest implements IXposedHookLoadPackage, IXposedHookZygoteInit {
             String replace = removeSpaces(result);
 
 
-            String crateDamai = getCrate(replace);
-            String daMaiCrateDate = "{\"feature\":\"{\\\"gzip\\\":\\\"true\\\"}\",\"params\":\""+crateDamai+"\"}";
+            String crateDamai = getCrate(replace,loadPackageParam);
+        //    String daMaiCrateDate = "{\"feature\":\"{\\\"gzip\\\":\\\"true\\\"}\",\"params\":\""+crateDamai+"\"}";
 
-            MyLog("daMaiCrateDate-->"+daMaiCrateDate);
+            MyLog("daMaiCrateDate-->"+crateDamai);
 
-            Object buildParams = crateBuildParams(loadPackageParam,daMaiCrateDate);
-            if (buildParams!=null) {
+            createApp(loadPackageParam,crateDamai);
+        //    Object buildParams = crateBuildParams(loadPackageParam,crateDamai);
+           /* if (buildParams!=null) {
 
 
                 Map<String, String> map = (Map<String, String>) buildParams;
@@ -471,7 +564,7 @@ public class HookTest implements IXposedHookLoadPackage, IXposedHookZygoteInit {
                         MyLog("请求失败：" + failure);
                     }
                 });
-            }
+            }*/
 
         }catch (Throwable  e){
             MyLog(e);
@@ -479,7 +572,7 @@ public class HookTest implements IXposedHookLoadPackage, IXposedHookZygoteInit {
 
 
     }
-    public String getCrate(String result){
+    public String getCrate(String result,XC_LoadPackage.LoadPackageParam loadPackageParam){
         try {
             JSONObject  js = new JSONObject(result);
             JSONObject allData = js.getJSONObject("data");
@@ -588,6 +681,33 @@ public class HookTest implements IXposedHookLoadPackage, IXposedHookZygoteInit {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
                 String myData = newData.toString();
 
+                Class<?> b = XposedHelpers.findClass("com.taobao.android.ultron.datamodel.imp.b", loadPackageParam.classLoader);
+
+                Gson gson = new Gson();
+                String jsonString = gson.toJson(newData);
+              //  XposedHelpers.callMethod(b, "b", jsonString);
+                String b1 = (String)  XposedHelpers.callStaticMethod(b, "b", jsonString);
+
+               /* Map<String, String> feature = new HashMap<String, String>();
+                feature.put("gzip", "true");
+
+                Map<String, String> map = new HashMap<String, String>();
+                map.put("feature", feature.toString());
+                map.put("params", b1);
+                */
+
+                String daMaiCrateDate = "{\"feature\":\"{\\\"gzip\\\":\\\"true\\\"}\",\"params\":\""+b1+"\"}";
+
+               // String body = gson.toJson(map);
+
+              //  String body = "{\"feature\":\"{\\\"gzip\\\":\\\"true\\\"}\",\"params\":\""+b1+"\"}";
+                // 构造请求体
+
+                MyLog("body:"+daMaiCrateDate);
+
+
+
+
                 // 转义字符串
               //  String escapedString = StringEscapeUtils.escapeJava(originalString);
                 myData = myData.replaceAll("\\\\/", "/");
@@ -598,12 +718,10 @@ public class HookTest implements IXposedHookLoadPackage, IXposedHookZygoteInit {
             //    String s2 = "H4SIAAAAAAAAAN" + s1.substring(14);
 
               //  String crateBase = compress(newData.toString());
-                if (s1!=null) {
+
                 //    String s = addNewLine(s1);
-                    return s1;
-                }else {
-                    return null;
-                }
+                return daMaiCrateDate;
+
             }else {
                 if (context!=null){
 

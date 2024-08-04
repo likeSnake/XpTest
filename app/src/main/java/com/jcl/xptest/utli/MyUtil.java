@@ -17,6 +17,9 @@ import androidx.annotation.RequiresApi;
 import com.jcl.xptest.R;
 
 import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.zip.GZIPOutputStream;
@@ -159,6 +162,24 @@ public class MyUtil {
             e.printStackTrace();
         }
         return null;
+    }
+
+    public static void writeTextFileToInternalStorage(Context context, String fileName, String fileContent) {
+        try {
+            // 获取内部存储的根目录
+            File root = context.getFilesDir();
+
+            MyLog("路径: "+root);
+            // 创建目标文件
+            File file = new File(root, fileName);
+
+            // 将字符串写入文件
+            FileOutputStream outputStream = new FileOutputStream(file);
+            outputStream.write(fileContent.getBytes());
+            outputStream.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
 }

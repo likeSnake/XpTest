@@ -1,32 +1,23 @@
 package com.jcl.xptest;
 
 import static com.jcl.xptest.constants.Constants.DaMai_Build_URL;
-import static com.jcl.xptest.constants.Constants.DaMai_Crate_URL;
 import static com.jcl.xptest.constants.Constants.MtopRequestData;
 import static com.jcl.xptest.utli.HttpUtils.sendPostRequest;
 import static com.jcl.xptest.utli.MyUtil.MyLog;
 import static com.jcl.xptest.utli.MyUtil.MyToast;
-import static com.jcl.xptest.utli.MyUtil.addNewLine;
-import static com.jcl.xptest.utli.MyUtil.compress;
 import static com.jcl.xptest.utli.MyUtil.myCompress;
+import static com.jcl.xptest.utli.MyUtil.writeTextFileToInternalStorage;
 ;
 
 
 import android.app.Activity;
-import android.app.Application;
 import android.content.Context;
 import android.os.Build;
 import android.util.Log;
-import android.view.View;
-import android.view.ViewTreeObserver;
 import android.view.WindowManager;
-import android.widget.Toast;
 
 import com.google.gson.Gson;
-import com.google.gson.JsonObject;
-import com.google.gson.reflect.TypeToken;
 import com.jcl.xptest.pojo.AppInfo;
-import com.jcl.xptest.pojo.DaMaiCreate;
 import com.jcl.xptest.utli.HttpUtils;
 import com.jcl.xptest.utli.MyUtil;
 
@@ -39,10 +30,11 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.UnsupportedEncodingException;
+import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
+import java.lang.reflect.Proxy;
 import java.net.URLEncoder;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
@@ -62,7 +54,7 @@ public class HookTest implements IXposedHookLoadPackage, IXposedHookZygoteInit {
     public static boolean isFirst = true;
     private ArrayList<String> allName;
     private static Object sLiveDataInstance;
-
+    public static boolean isBuildFirst = true;
 
 
     public void loadWindow(XC_LoadPackage.LoadPackageParam loadPackageParam){
@@ -205,7 +197,7 @@ public class HookTest implements IXposedHookLoadPackage, IXposedHookZygoteInit {
         if (loadPackageParam.packageName.equals("cn.damai")) {
             MyLog("进入hook");
             // runShell(loadPackageParam.packageName);
-            MyDaMaiTest(loadPackageParam);
+         //   MyDaMaiTest(loadPackageParam);
             XposedHelpers.findAndHookMethod(Activity.class, "onResume", new XC_MethodHook() {
                 @Override
                 protected void afterHookedMethod(MethodHookParam param) throws Throwable {
@@ -220,7 +212,9 @@ public class HookTest implements IXposedHookLoadPackage, IXposedHookZygoteInit {
 
                     if (activityName.equals("cn.damai.trade.newtradeorder.ui.projectdetail.ui.activity.ProjectDetailActivity")||
                             activityName.equals("cn.damai.homepage.v2.ChannelPageActivity")) {
-                        initBuild(loadPackageParam);
+                        DaMaiBuild(loadPackageParam,MtopRequestData);
+
+                       // initBuild(loadPackageParam);
 
                         //hookAll(loadPackageParam);
 
@@ -274,9 +268,33 @@ public class HookTest implements IXposedHookLoadPackage, IXposedHookZygoteInit {
         }
     }
 
-    public void createApp(XC_LoadPackage.LoadPackageParam loadPackageParam,String Data){
+    public void DaMaiCreate(XC_LoadPackage.LoadPackageParam loadPackageParam, String Dat){
+        Object buildParams = crateBuildParams(loadPackageParam,MtopRequestData);
+
+
+
+
+    }
+
+    public void DaMaiBuild(XC_LoadPackage.LoadPackageParam loadPackageParam, String Data){
 
         try {
+
+           /* XposedHelpers.findAndHookMethod("com.taobao.tao.remotebusiness.IRemoteListener", loadPackageParam.classLoader, "onSuccess", int.class, "mtopsdk.mtop.domain.MtopResponse", "mtopsdk.mtop.domain.BaseOutDo", java.lang.Object.class, new XC_MethodHook() {
+                @Override
+                protected void beforeHookedMethod(MethodHookParam param) throws Throwable {
+                    super.beforeHookedMethod(param);
+                }
+                @Override
+                protected void afterHookedMethod(MethodHookParam param) throws Throwable {
+                    super.afterHookedMethod(param);
+                    Object arg = param.args[1];
+                    JsonObject getDataJsonObject = (JsonObject) XposedHelpers.callMethod(arg, "getDataJsonObject");
+                    MyLog("getDataJsonObject-->"+getDataJsonObject.toString());
+
+                }
+            });
+
 
 
             // 创建并注册自定义 ResponseListener 类
@@ -304,7 +322,7 @@ public class HookTest implements IXposedHookLoadPackage, IXposedHookZygoteInit {
 
                     JSONObject buildData = new JSONObject(dataJsonObject.toString());
 
-              /*  JSONObject createData = new JSONObject();
+              *//*  JSONObject createData = new JSONObject();
                 createData.put("data", new JSONObject());
                 createData.put("endpoint", buildData.get("endpoint"));
                 createData.put("hierarchy", buildData.get("hierarchy"));
@@ -318,10 +336,13 @@ public class HookTest implements IXposedHookLoadPackage, IXposedHookZygoteInit {
                 linkage.put("common", common);
                 linkage.put("signature", buildData.getJSONObject("linkage").get("signature"));
 
-                createData.put("linkage", linkage);*/
+                createData.put("linkage", linkage);*//*
                 }
             });
 
+            ClassLoader classLoader=lpparam.classLoader;
+Class IRemoteBaseListenerClass=classLoader.loadClass("com.taobao.tao.remotebusiness.IRemoteBaseListener");
+*/
 
             Object mtopRequest = crateMtopRequest(loadPackageParam, Data);
 
@@ -344,13 +365,36 @@ public class HookTest implements IXposedHookLoadPackage, IXposedHookZygoteInit {
             XposedHelpers.callMethod(build1, "setBizId", 24);
             XposedHelpers.callMethod(build1, "setErrorNotifyAfterCache", true);
 
-
+            //MtopRequest 父类
             Class<?> mMtopListener = XposedHelpers.findClass("mtopsdk.mtop.intf.MtopBuilder", loadPackageParam.classLoader);
 
+            Class<?> IRemoteListener = XposedHelpers.findClass("com.taobao.tao.remotebusiness.IRemoteListener", loadPackageParam.classLoader);
 
-            XposedHelpers.setObjectField(mMtopListener, "request", build1);
-            Object mtopStatistics = XposedHelpers.newInstance(mMtopListener, (Object) null, null);
-            XposedHelpers.callMethod(mMtopListener, "addListener", true);
+
+            XposedHelpers.setObjectField(build1, "request", mtopRequest);
+          //  XposedHelpers.set
+
+
+            Class<?> IRemoteBaseListener = XposedHelpers.findClass("com.taobao.tao.remotebusiness.IRemoteBaseListener", loadPackageParam.classLoader);
+
+            Object iRemoteBaseListenerProxy = Proxy.newProxyInstance(
+                    loadPackageParam.classLoader,
+                    new Class[]{IRemoteBaseListener},
+                    new IRemoteBaseListenerInvocationHandler()
+            );
+
+            MyLog("iRemoteBaseListenerProxy->"+iRemoteBaseListenerProxy.getClass().getName());
+           /* Object myTestIF = XposedHelpers.newInstance(IRemoteBaseListener, new InvocationHandler() {
+                @Override
+                public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
+
+                    return null;
+                }
+            });*/
+
+
+            XposedHelpers.callMethod(build1, "addListener", iRemoteBaseListenerProxy);
+            XposedHelpers.callMethod(build1, "startRequest");
 
         }catch (Exception e){
             MyLog("crateBuildParams："+e);
@@ -359,6 +403,31 @@ public class HookTest implements IXposedHookLoadPackage, IXposedHookZygoteInit {
 
     }
 
+    private static class IRemoteBaseListenerInvocationHandler implements InvocationHandler {
+        @Override
+        public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
+            MyLog("method.getName()-->"+method.getName());
+
+            if (method.getName().equals("onSuccess")) {
+
+                if (isBuildFirst) {
+                    Object mtopResponse = args[1];
+                    Object getDataJsonObject = XposedHelpers.callMethod(mtopResponse, "getDataJsonObject");
+
+                    MyLog("getDataJsonObject-->" + getDataJsonObject);
+                    writeTextFileToInternalStorage(context, "大麦build", getDataJsonObject.toString());
+
+                    // 在这里处理 onSystemError 事件
+                    // ...
+
+                    // return null;
+                    isBuildFirst = false;
+                }
+            }
+
+            return method.invoke(proxy, args);
+        }
+    }
     public Object crateBuildParams(XC_LoadPackage.LoadPackageParam loadPackageParam,String Data){
         try{
 
@@ -388,7 +457,7 @@ public class HookTest implements IXposedHookLoadPackage, IXposedHookZygoteInit {
             Class<?> mMtopListener = XposedHelpers.findClass("mtopsdk.mtop.intf.MtopBuilder", loadPackageParam.classLoader);
 
 
-            XposedHelpers.setObjectField(mMtopListener, "request", build1);
+
 
             XposedHelpers.setLongField(build1, "reqStartTime", System.currentTimeMillis());
             XposedHelpers.setBooleanField(build1, "isCancelled", false);
@@ -524,7 +593,10 @@ public class HookTest implements IXposedHookLoadPackage, IXposedHookZygoteInit {
 
             MyLog("daMaiCrateDate-->"+crateDamai);
 
-            createApp(loadPackageParam,crateDamai);
+            MyLog("停顿两秒--");
+
+            Thread.sleep(2000);
+
         //    Object buildParams = crateBuildParams(loadPackageParam,crateDamai);
            /* if (buildParams!=null) {
 
@@ -575,8 +647,8 @@ public class HookTest implements IXposedHookLoadPackage, IXposedHookZygoteInit {
     public String getCrate(String result,XC_LoadPackage.LoadPackageParam loadPackageParam){
         try {
             JSONObject  js = new JSONObject(result);
-            JSONObject allData = js.getJSONObject("data");
-            JSONObject data = allData.getJSONObject("data");
+
+            JSONObject data = js.getJSONObject("data");
 
             JSONObject newJson = new JSONObject();
             Iterator<String> keys = data.keys();
@@ -643,11 +715,11 @@ public class HookTest implements IXposedHookLoadPackage, IXposedHookZygoteInit {
             }
             MyLog("观影人数信息："+ allName);
 
-            JSONObject endpoint = allData.getJSONObject("endpoint");
-            JSONObject hierarchy = allData.getJSONObject("hierarchy");
+            JSONObject endpoint = js.getJSONObject("endpoint");
+            JSONObject hierarchy = js.getJSONObject("hierarchy");
             hierarchy.remove("root");
 
-            JSONObject linkage = allData.getJSONObject("linkage");
+            JSONObject linkage = js.getJSONObject("linkage");
             linkage.remove("input");
             linkage.remove("request");
 

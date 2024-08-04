@@ -6,7 +6,7 @@ public class Constants {
     public static String DaMaiPNum = "1";
     public static String DaMaiPId = "5192856207093";
 
-    public static String LinShi = "717413939954_1_5175962414348";
+    public static String LinShi = "724811045159_1_5036084393603";
 
     public static String IDS = DaMaiYId+"_"+DaMaiPNum+"_"+DaMaiPId;
 
